@@ -32,6 +32,10 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
@@ -47,6 +51,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     String TAG = "MapsActivity" ;
 
     RequestQueue requestQueue;
+
+    String[] typeString = {"", "약국", "우체국", "농협"} ;
 
     private static final int GPS_ENABLE_REQUEST_CODE = 2001;
     private static final int PERMISSIONS_REQUEST_CODE = 100;
@@ -103,7 +109,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public boolean onMarkerClick(Marker marker) {
 
                 Log.e(TAG, "Marker Clicked ...");
-                String url = "https://8oi9s0nnth.apigw.ntruss.com/corona19-masks/v1/storesByGeo/json" ; // ?lat=36.358406&lng=127.381743&m=1000
+                String url = "https://8oi9s0nnth.apigw.ntruss.com/corona19-masks/v1/storesByGeo/json?lat=" + lat +"&lng=" + lng +"&m=1000";
                 Log.e(TAG, url + " lat=" + lat + " lng=" + lng) ;
                 StringRequest request = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
                     @Override
@@ -117,6 +123,41 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             }
                         }
                         Log.e(TAG, response) ;
+                        /**
+                         *         "addr": "대전광역시 서구 대덕대로 189 (둔산동)",
+                         *         "code": "34842071",
+                         *         "created_at": "2020/03/12 16:20:00",
+                         *         "lat": 36.3502396,
+                         *         "lng": 127.3772812,
+                         *         "name": "도담약국",
+                         *         "remain_stat": "some",
+                         *         "stock_at": "2020/03/12 10:06:00",
+                         *         "type": "01"
+                         */
+                        try {
+                            JSONObject jsonObject = new JSONObject(response) ;
+                            int count = jsonObject.getInt("count");
+                            JSONArray stores = jsonObject.getJSONArray("stores") ;
+                            for (int i=0 ; i < count ; i++) {
+                                JSONObject store = stores.getJSONObject(i) ;
+                                String addr = store.getString("addr") ;
+                                long code = store.getLong("code") ;
+                                String create_at = store.getString("created_at") ;
+                                double lat = store.getDouble("lat") ;
+                                double lng = store.getDouble("lng") ;
+                                String name = store.getString("name") ;
+                                String remain_stat = store.getString("remain_stat") ;
+                                String stock_at = store.getString("stock_at") ;
+                                int type = store.getInt("type") ;
+
+                                Log.e(TAG, " " + addr + " " + code + " " + create_at + " " + lat + " " + lng
+                                        + " " + name + " " + remain_stat + " " + stock_at + " " + typeString[type]);
+
+                            }
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
 
                     }
                 }, new Response.ErrorListener() {
@@ -124,17 +165,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     public void onErrorResponse(VolleyError error) {
                         error.printStackTrace();
                     }
-                }){
-                    @Override
-                    protected Map<String, String> getParams() throws AuthFailureError {
-                        HashMap<String, String> params = new HashMap<String, String>();
-                        params.clear();
-                        params.put("lat", String.valueOf(lat)) ;
-                        params.put("lng", String.valueOf(lng)) ;
-                        params.put("m", String.valueOf(3000)) ;
-                        return params;
-                    }
-                };
+                });
                 request.setShouldCache(false);
                 requestQueue.add(request) ;
                 return false;

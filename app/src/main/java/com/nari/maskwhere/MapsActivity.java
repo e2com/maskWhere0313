@@ -153,6 +153,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                                 Log.e(TAG, " " + addr + " " + code + " " + create_at + " " + lat + " " + lng
                                         + " " + name + " " + remain_stat + " " + stock_at + " " + typeString[type]);
 
+                                LatLng location = new LatLng(lat, lng);
+                                mMap.addMarker(new MarkerOptions().position(location).title(name + "\n" + remain_stat));
                             }
 
                         } catch (JSONException e) {
